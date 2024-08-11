@@ -22,6 +22,9 @@ import ryo.myappcompany.weatherreportapp.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -32,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
 
-    private static final String TAG = "MyActivity";
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         DownloadTask task = new DownloadTask();
+
+        Log.i(TAG, "DownloadTask execute");
+        task.execute("https://weather.tsukumijima.net/api/forecast/city/400040");
     }
 
     public class DownloadTask extends AsyncTask<String,Void,String> {
@@ -67,13 +73,36 @@ public class MainActivity extends AppCompatActivity {
                     data = reader.read();
                 }
 
-                Log.i("doInBackground", "doInBackground(result): " + result);
+                Log.i(TAG, "doInBackground(result): " + result);
 
                 return result;
 
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            try {
+                JSONObject jsonObject = new JSONObject(s);
+                String weatherInfo = jsonObject.getString("weather");
+
+                Log.i(TAG, "Weather content: " + weatherInfo);
+
+                JSONArray arr = new JSONArray(weatherInfo);
+
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject jsonPart = arr.getJSONObject(i);
+
+                    Log.d(TAG, "main: " + jsonPart.getString("main"));
+                    Log.d(TAG, "description: " + jsonPart.getString("description"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
